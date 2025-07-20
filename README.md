@@ -32,13 +32,15 @@
 
 ## 🚀 セットアップと起動方法
 
-### 前提条件
+### ローカル環境での開発
+
+#### 前提条件
 - Python 3.8以上
 - 仮想環境 `langchain` が設定済み
 - OpenAI APIキー
 - SerpAPI APIキー
 
-### 1. 仮想環境のアクティベート
+#### 1. 仮想環境のアクティベート
 ```bash
 # new_appディレクトリで実行（親ディレクトリの仮想環境を使用）
 source ../langchain/bin/activate
@@ -47,7 +49,7 @@ source ../langchain/bin/activate
 # ..\langchain\Scripts\activate
 ```
 
-### 2. 依存関係のインストール・確認
+#### 2. 依存関係のインストール・確認
 ```bash
 # requirements.txtから必要なライブラリをインストール
 pip install -r requirements.txt
@@ -56,17 +58,17 @@ pip install -r requirements.txt
 pip list | grep -E "(flask|langchain|openai|chromadb|serpapi)"
 ```
 
-### 3. 設定ファイルの準備
+#### 3. 設定ファイルの準備
 ```bash
-# config.py.example をコピーして config.py を作成
-cp config.py.example config.py
+# .env.example をコピーして .env を作成
+cp .env.example .env
 
-# config.py を編集してAPIキーを設定
-# OPENAI_API_KEY = "your-openai-api-key"
-# SERP_API_KEY = "your-serp-api-key"
+# .env を編集してAPIキーを設定
+# OPENAI_API_KEY=your-openai-api-key
+# SERP_API_KEY=your-serp-api-key
 ```
 
-### 4. アプリケーションの起動
+#### 4. アプリケーションの起動
 ```bash
 # new_app ディレクトリに移動
 cd new_app
@@ -75,8 +77,112 @@ cd new_app
 python app.py
 ```
 
-### 5. アクセス
+#### 5. アクセス
 ブラウザで `http://localhost:5000` にアクセス
+
+### 🖥️ XserverVPSでのデプロイ
+
+XserverVPSでこのアプリケーションを運用する場合の手順です。
+
+#### 前提条件
+- XserverVPSのインスタンス（Ubuntu 20.04以上推奨）
+- SSH接続可能な環境
+- Python 3.8以上がインストール済み
+- Gitがインストール済み
+
+#### 1. XserverVPSにSSH接続
+```bash
+# SSHでVPSに接続
+ssh your-username@your-vps-ip-address
+```
+
+#### 2. 自動デプロイスクリプトの実行
+```bash
+# GitHubからプロジェクトをクローンしてデプロイ
+wget https://raw.githubusercontent.com/tinyoko/patent_langchain/main/deploy.sh
+chmod +x deploy.sh
+bash deploy.sh
+```
+
+または、手動でリポジトリをクローンしてから実行：
+
+```bash
+# プロジェクトのクローン
+git clone https://github.com/tinyoko/patent_langchain.git
+cd patent_langchain
+
+# デプロイスクリプトの実行
+bash deploy.sh
+```
+
+#### 3. 環境変数の設定
+初回実行時に `.env` ファイルが作成されるので、以下を編集：
+
+```bash
+# .envファイルを編集
+nano .env
+```
+
+必要な設定：
+```env
+OPENAI_API_KEY=your-openai-api-key
+SERP_API_KEY=your-serpapi-key
+FLASK_SECRET_KEY=your-secret-key-here
+FLASK_HOST=0.0.0.0
+FLASK_PORT=5000
+FLASK_DEBUG=False
+```
+
+#### 4. アプリケーションの起動
+```bash
+# 設定完了後、再度デプロイスクリプトを実行
+bash deploy.sh
+```
+
+#### 5. アクセス確認
+- ブラウザで `http://your-vps-ip:5000` にアクセス
+- ファイアウォールでポート5000が開いていることを確認
+
+#### 6. 本番環境でのサービス管理（オプション）
+
+Systemdを使用してサービスとして管理する場合：
+
+```bash
+# サービスファイルの作成
+sudo nano /etc/systemd/system/patent-app.service
+```
+
+サービスファイル内容：
+```ini
+[Unit]
+Description=Patent Search Application
+After=network.target
+
+[Service]
+Type=simple
+User=your-username
+WorkingDirectory=/home/your-username/patent_langchain
+Environment=PATH=/home/your-username/patent_langchain/venv/bin
+ExecStart=/home/your-username/patent_langchain/venv/bin/python app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+サービスの有効化と開始：
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable patent-app
+sudo systemctl start patent-app
+sudo systemctl status patent-app
+```
+
+#### XserverVPS固有の注意事項
+- ポート5000がファイアウォールで許可されていることを確認
+- メモリ使用量を定期的に監視（ChromaDBがメモリを使用）
+- ログファイルのローテーション設定を推奨
+- SSL証明書の設定（Let's Encrypt等）を検討
 
 ## 📱 使用方法
 

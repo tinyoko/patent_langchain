@@ -16,7 +16,7 @@ import config
 
 # === Flask アプリケーションの設定 ===
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
+app.config['SECRET_KEY'] = config.SECRET_KEY
 app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH
 
@@ -235,4 +235,4 @@ def reset():
 
 # === Flaskの起動 ===
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host=config.HOST, port=config.PORT, debug=config.DEBUG)
