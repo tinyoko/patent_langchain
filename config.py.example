@@ -1,0 +1,33 @@
+import os
+
+# APIキーの設定
+# 下記のプレースホルダーを実際のAPIキーに置き換えてください
+OPENAI_API_KEY = "sk-your-openai-api-key-here"
+SERP_API_KEY = "your-serpapi-key-here"
+
+# ファイルアップロード設定
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'pdf'}
+MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB制限
+
+# ChromaDB設定
+CHROMA_PERSIST_DIRECTORY = "chroma_db"
+
+# === 設定手順 ===
+# 1. このファイルを config.py にコピー:
+#    cp config.py.example config.py
+#
+# 2. OpenAI APIキーを取得:
+#    https://platform.openai.com/api-keys
+#
+# 3. SerpAPI APIキーを取得:
+#    https://serpapi.com/dashboard
+#
+# 4. 上記のプレースホルダーを実際のAPIキーに置き換える
+#
+# === 注意事項 ===
+# - config.py はGitに含まれません（.gitignoreで除外）
+# - APIキーは絶対に公開しないでください
+# - 環境変数での管理も推奨されます:
+#   OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+#   SERP_API_KEY = os.getenv("SERP_API_KEY")

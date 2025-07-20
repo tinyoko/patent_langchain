@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>特許公開公報 - AI検索アシスタント</title>
+    <style>
+      body {
+        font-family: "Roboto", "Noto Sans JP", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #333;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        color: #4a5568;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+        color: #718096;
+        margin-bottom: 0;
+      }
+
+      .upload-section {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+      }
+
+      .upload-area {
+        border: 3px dashed #cbd5e0;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .upload-area:hover {
+        border-color: #667eea;
+        background: #f7fafc;
+      }
+
+      .upload-area.dragover {
+        border-color: #667eea;
+        background: #ebf8ff;
+      }
+
+      .upload-icon {
+        font-size: 3rem;
+        color: #a0aec0;
+        margin-bottom: 20px;
+      }
+
+      .upload-text {
+        font-size: 1.2rem;
+        color: #4a5568;
+        margin-bottom: 10px;
+      }
+
+      .upload-subtext {
+        font-size: 0.9rem;
+        color: #718096;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        margin: 10px 5px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: #e2e8f0;
+        color: #4a5568;
+      }
+
+      .btn-secondary:hover {
+        background: #cbd5e0;
+      }
+
+      .question-section {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+      }
+
+      .question-section h2 {
+        color: #4a5568;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+      }
+
+      input[type="text"] {
+        width: calc(100% - 24px);
+        padding: 15px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+        margin-bottom: 15px;
+      }
+
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .response-section {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      .response-section h2 {
+        margin-top: 0;
+        font-size: 1.5rem;
+        color: #4a5568;
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+
+      .answer-content {
+        line-height: 1.8;
+        color: #2d3748;
+        white-space: pre-wrap;
+      }
+
+      .links-list {
+        padding-left: 0;
+        list-style: none;
+      }
+
+      .links-list li {
+        margin-bottom: 15px;
+        padding: 15px;
+        background: #f7fafc;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+      }
+
+      .links-list a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        display: block;
+        transition: color 0.2s ease;
+      }
+
+      .links-list a:hover {
+        color: #5a67d8;
+      }
+
+      .status-message {
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+        font-weight: 500;
+      }
+
+      .status-success {
+        background: #f0fff4;
+        color: #38a169;
+        border: 1px solid #9ae6b4;
+      }
+
+      .status-error {
+        background: #fed7d7;
+        color: #e53e3e;
+        border: 1px solid #feb2b2;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .buttons-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- ヘッダー -->
+      <div class="header">
+        <h1>特許公開公報 AI検索アシスタント</h1>
+        <p class="subtitle">特許文書をアップロードして、AIによる詳細な分析と関連情報検索を行います</p>
+      </div>
+
+      <!-- ファイルアップロードセクション -->
+      <div class="upload-section">
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">特許公開公報PDFファイルをアップロード</div>
+          <div class="upload-subtext">クリックまたはドラッグ&ドロップでファイルを選択</div>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf" />
+        
+        <div class="buttons-container">
+          <button class="btn btn-primary" onclick="uploadFile()">
+            <span id="uploadText">アップロード開始</span>
+            <div id="uploadLoading" class="loading hidden"></div>
+          </button>
+          <button class="btn btn-secondary" onclick="resetSystem()">システムリセット</button>
+        </div>
+        
+        <div id="uploadStatus"></div>
+      </div>
+
+      <!-- 質問セクション -->
+      <div class="question-section">
+        <h2>🔍 特許内容について質問する</h2>
+        <form id="questionForm">
+          <input
+            type="text"
+            id="question"
+            name="question"
+            placeholder="例: この特許の技術的特徴は何ですか？類似の先行技術はありますか？"
+            required
+          />
+          <button type="submit" class="btn btn-primary">
+            <span id="askText">質問する</span>
+            <div id="askLoading" class="loading hidden"></div>
+          </button>
+        </form>
+      </div>
+
+      <!-- 回答セクション -->
+      <div id="responseContainer" class="hidden">
+        <div class="response-section">
+          <h2>💡 AI分析結果</h2>
+          <div id="answer" class="answer-content"></div>
+        </div>
+
+        <div class="response-section">
+          <h2>🔗 関連する特許情報</h2>
+          <ul id="links" class="links-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ドラッグ&ドロップ機能
+      const uploadArea = document.querySelector('.upload-area');
+      const fileInput = document.getElementById('fileInput');
+
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+      });
+
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+        }
+      });
+
+      // ファイルアップロード機能
+      function uploadFile() {
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+          showStatus('ファイルを選択してください', 'error');
+          return;
+        }
+
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+          showStatus('PDFファイルのみアップロード可能です', 'error');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // ローディング表示
+        document.getElementById('uploadText').textContent = 'アップロード中...';
+        document.getElementById('uploadLoading').classList.remove('hidden');
+
+        fetch('/upload', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showStatus('特許文書のアップロードと処理が完了しました！', 'success');
+          } else {
+            showStatus(`エラー: ${data.error}`, 'error');
+          }
+        })
+        .catch(error => {
+          showStatus(`エラー: ${error.message}`, 'error');
+        })
+        .finally(() => {
+          document.getElementById('uploadText').textContent = 'アップロード開始';
+          document.getElementById('uploadLoading').classList.add('hidden');
+        });
+      }
+
+      // 質問送信機能
+      document.getElementById('questionForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const question = document.getElementById('question').value;
+
+        // ローディング表示
+        document.getElementById('askText').textContent = '分析中...';
+        document.getElementById('askLoading').classList.remove('hidden');
+
+        fetch('/ask', {
+          method: 'POST',
+          body: new URLSearchParams({ question: question }),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            showStatus(`エラー: ${data.error}`, 'error');
+            return;
+          }
+
+          // 回答表示
+          document.getElementById('answer').textContent = data.answer || '回答を生成できませんでした。';
+
+          // リンク表示
+          const linksUl = document.getElementById('links');
+          linksUl.innerHTML = '';
+
+          const linksArray = typeof data.links === 'string' 
+            ? data.links.split('\n') 
+            : data.links;
+
+          if (linksArray && linksArray.length > 0) {
+            linksArray.forEach(linkText => {
+              if (!linkText.trim()) return;
+
+              const li = document.createElement('li');
+              const a = document.createElement('a');
+
+              const urlMatch = linkText.match(/https?:\/\/[^\s]+/);
+              const url = urlMatch ? urlMatch[0] : '#';
+
+              a.href = url;
+              a.textContent = linkText;
+              a.target = '_blank';
+              li.appendChild(a);
+              linksUl.appendChild(li);
+            });
+          } else {
+            linksUl.innerHTML = '<li>関連する特許情報が見つかりませんでした。</li>';
+          }
+
+          // 回答セクションを表示
+          document.getElementById('responseContainer').classList.remove('hidden');
+        })
+        .catch(error => {
+          showStatus(`エラー: ${error.message}`, 'error');
+        })
+        .finally(() => {
+          document.getElementById('askText').textContent = '質問する';
+          document.getElementById('askLoading').classList.add('hidden');
+        });
+      });
+
+      // システムリセット機能
+      function resetSystem() {
+        if (confirm('アップロードした特許文書と分析データをすべてリセットしますか？')) {
+          fetch('/reset', {
+            method: 'POST'
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              showStatus('システムがリセットされました', 'success');
+              document.getElementById('responseContainer').classList.add('hidden');
+              document.getElementById('question').value = '';
+              document.getElementById('fileInput').value = '';
+            }
+          })
+          .catch(error => {
+            showStatus(`エラー: ${error.message}`, 'error');
+          });
+        }
+      }
+
+      // ステータスメッセージ表示
+      function showStatus(message, type) {
+        const statusDiv = document.getElementById('uploadStatus');
+        statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+        
+        // 3秒後に自動的に消去
+        setTimeout(() => {
+          statusDiv.innerHTML = '';
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>
