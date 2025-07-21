@@ -331,19 +331,113 @@ python app.py
 
 #### 3. 既存DifyアプリとのNginx統合
 
-##### Difyの設定構造確認
+##### XserverVPS環境での実際の操作手順
+
+**前提条件**:
+- Difyアプリが `/root/dify/docker` に設置済み
+- HTTPSドメイン `djartipy.com` が設定済み
+- 特許アプリが `/opt/projects/patent_langchain` で起動中（ポート5000）
+
+##### Step 1: Difyディレクトリ構造の確認
 ```bash
-# Difyのdocker-compose.yamlとNginx設定の確認
+# rootユーザーでSSH接続後
 cd /root/dify/docker
+
+# ディレクトリ構造確認
+ls -la
+# 出力例:
+# drwxr-xr-x 2 root root 4096 Jul 21 10:44 nginx
+# -rw-r--r-- 1 root root 8932 Jul 12 16:53 docker-compose.yaml
+# -rw-r--r-- 1 root root 1847 Jul 12 16:53 .env
+
+# Nginx設定ディレクトリ確認
 ls -la nginx/conf.d/
+# 出力例:
+# -rw-r--r-- 1 root root 1504 Jul 21 10:26 default.conf
+# -rw-r--r-- 1 root root 1504 Jul 21 10:16 default.conf.backup
+# -rw-r--r-- 1 root root 1128 Jul 12 16:53 default.conf.template
+```
+
+##### Step 2: 現在の設定ファイル内容確認
+```bash
+# テンプレートファイルの内容確認
 cat nginx/conf.d/default.conf.template
 ```
 
-##### Nginx設定ファイルへの追加
+**確認すべき内容**:
+```nginx
+# Please do not directly edit this file. Instead, modify the .env variables related to NGINX configuration.
+
+server {
+    listen ${NGINX_PORT};
+    server_name ${NGINX_SERVER_NAME};
+
+    location /console/api {
+      proxy_pass http://api:5001;
+      include proxy.conf;
+    }
+    # ... その他のDify設定 ...
+    
+    location / {
+      proxy_pass http://web:3000;
+      include proxy.conf;
+    }
+    location /mcp {
+      proxy_pass http://api:5001;
+      include proxy.conf;
+    }
+}
+```
+
+##### Step 3: 安全なバックアップ作成
+```bash
+# 作業前にバックアップを作成
+cp nginx/conf.d/default.conf.template nginx/conf.d/default.conf.template.backup
+
+# バックアップ確認
+ls -la nginx/conf.d/default.conf.template*
+# 出力例:
+# -rw-r--r-- 1 root root 1128 Jul 12 16:53 default.conf.template
+# -rw-r--r-- 1 root root 1128 Jul 21 10:47 default.conf.template.backup
+```
+
+##### Step 4: 特許アプリ接続確認
+```bash
+# 特許アプリの起動状態確認
+ss -tlnp | grep 5000
+# 出力例: LISTEN 0 128 0.0.0.0:5000 0.0.0.0:* users:(("python",pid=2438213,fd=3))
+
+# Dockerコンテナからホストへの接続テスト
+docker exec docker-nginx-1 curl -v http://172.17.0.1:5000
+# 正常な場合: HTTP/1.1 200 OK が返される
+```
+
+##### Step 5: テンプレートファイルの編集
+
 **重要**: `default.conf`ではなく`default.conf.template`を編集すること
 
-**ファイル**: `/root/dify/docker/nginx/conf.d/default.conf.template`
+```bash
+# viエディタでテンプレートファイルを開く
+vi nginx/conf.d/default.conf.template
+```
 
+**編集手順**:
+1. viエディタで `/mcp` を検索: `/mcp` + Enter
+2. `/mcp` ロケーションブロックの**前**にカーソルを移動
+3. `O`（大文字のオー）で新しい行を挿入
+4. 以下のコードを入力:
+
+```nginx
+    location /patent {
+      rewrite ^/patent/?(.*) /$1 break;
+      proxy_pass http://172.17.0.1:5000;
+      include proxy.conf;
+    }
+```
+
+5. `Esc` → `:wq` → Enter で保存終了
+
+**編集後の最終的な構造**:
 ```nginx
 # Please do not directly edit this file. Instead, modify the .env variables related to NGINX configuration.
 
@@ -352,34 +446,128 @@ server {
     server_name ${NGINX_SERVER_NAME};
 
     # 既存のDify設定...
-    location /console/api {
-      proxy_pass http://api:5001;
-      include proxy.conf;
-    }
-    
-    # ... その他のDify設定 ...
-
     location /e/ {
       proxy_pass http://plugin_daemon:5002;
       proxy_set_header Dify-Hook-Url $scheme://$host$request_uri;
       include proxy.conf;
     }
 
-    # 🔴 特許アプリケーション設定（ここを追加）
+    # 🔴 特許アプリケーション設定（新規追加）
     location /patent {
       rewrite ^/patent/?(.*) /$1 break;
       proxy_pass http://172.17.0.1:5000;
       include proxy.conf;
     }
 
-    # 注意: /patent設定は / 設定より前に配置する
+    # ⚠️ 重要: /patent設定は / 設定より前に配置
     location / {
       proxy_pass http://web:3000;
       include proxy.conf;
     }
-
-    # 残りの設定...
+    
+    location /mcp {
+      proxy_pass http://api:5001;
+      include proxy.conf;
+    }
+    # 以下省略...
 }
+```
+
+##### Step 6: 設定の確認と検証
+```bash
+# 編集結果の確認
+cat nginx/conf.d/default.conf.template | grep -A 4 -B 1 patent
+# 出力例:
+#     location /patent {
+#       rewrite ^/patent/?(.*) /$1 break;
+#       proxy_pass http://172.17.0.1:5000;
+#       include proxy.conf;
+#     }
+
+# Nginx設定の構文チェック（編集前に確認）
+docker exec docker-nginx-1 nginx -t
+# 出力例: nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
+
+##### Step 7: Dockerコンテナの再起動
+```bash
+# Nginxコンテナのみ再起動
+docker compose restart nginx
+# 出力例: [+] Restarting 1/1 ✔ Container docker-nginx-1 Started 10.7s
+
+# 再起動後の確認
+docker ps | grep nginx
+# 出力例: docker-nginx-1 nginx:latest "sh -c 'cp /docker-..." About a minute ago Up About a minute
+```
+
+##### Step 8: 設定反映の確認
+```bash
+# 生成された実際の設定ファイル確認
+cat nginx/conf.d/default.conf | grep -A 4 -B 1 patent
+# 出力例:
+#       location /patent {
+#         proxy_pass http://172.17.0.1:5000;
+#         include proxy.conf;
+#       }
+```
+
+##### Step 9: アクセステストと動作確認
+```bash
+# ローカルからHTTPSアクセステスト
+curl -v https://djartipy.com/patent
+# 正常な場合: HTTP/1.1 200 OK と特許アプリのHTMLが返される
+
+# リアルタイムログ監視（別ターミナル推奨）
+docker logs -f docker-nginx-1
+
+# 実際のアクセスでログ確認
+# ブラウザで https://djartipy.com/patent にアクセス
+# ログに以下が出力されることを確認:
+# 162.43.36.98 - - [21/Jul/2025:02:46:23 +0000] "GET /patent HTTP/1.1" 200 13422
+```
+
+##### トラブルシューティング
+
+**よくある問題と対処法**:
+
+1. **編集中にファイルが壊れた場合**
+```bash
+# バックアップから復元
+cp nginx/conf.d/default.conf.template.backup nginx/conf.d/default.conf.template
+
+# 復元確認
+cat nginx/conf.d/default.conf.template
+```
+
+2. **viエディタで編集に失敗した場合**
+```bash
+# 編集モードを抜ける: Esc
+# 保存せずに終了: :q!
+# 再度編集開始: vi nginx/conf.d/default.conf.template
+```
+
+3. **Docker再起動後に設定が反映されない場合**
+```bash
+# テンプレートファイルが正しく編集されているか確認
+grep -n "patent" nginx/conf.d/default.conf.template
+
+# 生成された設定ファイルを確認
+grep -n "patent" nginx/conf.d/default.conf
+
+# 必要に応じて全コンテナ再起動
+docker compose down && docker compose up -d
+```
+
+4. **404エラーが継続する場合**
+```bash
+# 特許アプリが起動しているか確認
+ss -tlnp | grep 5000
+
+# パスの順序確認（/patent が / より前にあるか）
+cat nginx/conf.d/default.conf.template | grep -n "location"
+
+# Dockerコンテナからの直接アクセステスト
+docker exec docker-nginx-1 curl http://172.17.0.1:5000
 ```
 
 ##### 設定のポイント
