@@ -277,5 +277,199 @@ return END
 
 **このドキュメントは開発プロセスの透明性と将来の保守性を目的として作成されました。**
 
-**最終更新**: 2025年1月20日  
+## 🚀 XserverVPS本番環境デプロイメント
+
+### デプロイメント概要
+このセクションでは、特許検索アプリケーションをXserverVPSに独自ドメイン（https://djartipy.com/patent）でデプロイする手順を記録しています。
+
+**デプロイ日**: 2025年7月21日  
+**デプロイ環境**: XserverVPS + Docker + Nginx  
+**アクセスURL**: https://djartipy.com/patent
+
+### デプロイメント手順
+
+#### 1. ローカル環境からの準備
+```bash
+# 本番環境用設定ファイルの作成
+cp config.py.example config.py
+cp .env.example .env
+
+# .envファイルに本番環境用APIキーを設定
+# OPENAI_API_KEY=実際のAPIキー
+# SERP_API_KEY=実際のAPIキー
+# FLASK_SECRET_KEY=ランダムな文字列
+# FLASK_HOST=0.0.0.0
+# FLASK_PORT=5000
+# FLASK_DEBUG=False
+
+# GitHubにプッシュ
+git add .
+git commit -m "Add production deployment configuration"
+git push origin main
+```
+
+#### 2. XserverVPSでのセットアップ
+```bash
+# プロジェクトのクローン
+cd /opt/projects
+git clone https://github.com/tinyoko/patent_langchain.git
+cd patent_langchain
+
+# 仮想環境のセットアップ
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 環境設定
+cp .env.example .env
+# .envファイルを編集してAPIキーを設定
+
+# アプリケーションの起動
+python app.py
+```
+
+#### 3. 既存DifyアプリとのNginx統合
+
+##### Difyの設定構造確認
+```bash
+# Difyのdocker-compose.yamlとNginx設定の確認
+cd /root/dify/docker
+ls -la nginx/conf.d/
+cat nginx/conf.d/default.conf.template
+```
+
+##### Nginx設定ファイルへの追加
+**重要**: `default.conf`ではなく`default.conf.template`を編集すること
+
+**ファイル**: `/root/dify/docker/nginx/conf.d/default.conf.template`
+
+```nginx
+# Please do not directly edit this file. Instead, modify the .env variables related to NGINX configuration.
+
+server {
+    listen ${NGINX_PORT};
+    server_name ${NGINX_SERVER_NAME};
+
+    # 既存のDify設定...
+    location /console/api {
+      proxy_pass http://api:5001;
+      include proxy.conf;
+    }
+    
+    # ... その他のDify設定 ...
+
+    location /e/ {
+      proxy_pass http://plugin_daemon:5002;
+      proxy_set_header Dify-Hook-Url $scheme://$host$request_uri;
+      include proxy.conf;
+    }
+
+    # 🔴 特許アプリケーション設定（ここを追加）
+    location /patent {
+      rewrite ^/patent/?(.*) /$1 break;
+      proxy_pass http://172.17.0.1:5000;
+      include proxy.conf;
+    }
+
+    # 注意: /patent設定は / 設定より前に配置する
+    location / {
+      proxy_pass http://web:3000;
+      include proxy.conf;
+    }
+
+    # 残りの設定...
+}
+```
+
+##### 設定のポイント
+1. **パスリライト**: `rewrite ^/patent/?(.*) /$1 break;`
+   - `/patent` → `/` にリライト
+   - `/patent/upload` → `/upload` にリライト
+   - `/patent/ask` → `/ask` にリライト
+
+2. **Dockerネットワーキング**: `http://172.17.0.1:5000`
+   - DockerコンテナからホストシステムへのアクセスにはブリッジゲートウェイIPを使用
+   - `host.docker.internal:5000`は環境によって動作しない場合がある
+
+3. **設定順序**: `/patent`設定を`/`設定より前に配置
+   - Nginxは上から順にマッチングするため、順序が重要
+
+##### Docker再起動とテスト
+```bash
+# Nginxコンテナの再起動
+cd /root/dify/docker
+docker compose restart nginx
+
+# 設定確認
+cat nginx/conf.d/default.conf | grep -A 4 -B 1 patent
+
+# HTTPSアクセステスト
+curl -v https://djartipy.com/patent
+```
+
+### 本番環境での技術的考慮事項
+
+#### セキュリティ
+- APIキーは環境変数で管理
+- FLASK_DEBUG=Falseに設定
+- HTTPSのみでアクセス可能
+- Let's Encryptによる自動SSL証明書管理
+
+#### パフォーマンス
+- Dockerコンテナ間通信の最適化
+- Nginxプロキシバッファリング設定
+- 特許アプリの軽量化（ChromaDB in-memory）
+
+#### 監視とログ
+```bash
+# Nginxアクセスログの確認
+docker logs docker-nginx-1 --tail 50
+
+# 特許アプリのログ確認
+cd /opt/projects/patent_langchain
+tail -f logs/app.log  # ログファイルが設定されている場合
+```
+
+### トラブルシューティング
+
+#### よくある問題と解決法
+
+1. **404エラーが返される**
+   ```bash
+   # Dockerコンテナからホストへの接続確認
+   docker exec docker-nginx-1 curl -v http://172.17.0.1:5000
+   
+   # 特許アプリの起動状態確認
+   ss -tlnp | grep 5000
+   ```
+
+2. **設定が反映されない**
+   ```bash
+   # テンプレートファイルの編集確認
+   cat /root/dify/docker/nginx/conf.d/default.conf.template | grep patent
+   
+   # Docker Compose再起動
+   docker compose restart nginx
+   ```
+
+3. **パスリライトが動作しない**
+   - `/patent`設定が`/`設定より前にあることを確認
+   - `rewrite`ディレクティブの構文チェック
+
+### システム運用
+
+#### 自動起動設定（今後の改善）
+- systemdサービス化による自動起動
+- プロセス監視とヘルスチェック
+- ログローテーション設定
+
+#### バックアップ
+- 設定ファイルのバージョン管理
+- アップロードファイルのバックアップ
+- データベースの定期バックアップ
+
+---
+
+**最終更新**: 2025年7月21日  
 **作成者**: Claude Code (Anthropic)
