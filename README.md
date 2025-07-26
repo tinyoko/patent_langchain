@@ -1,34 +1,43 @@
-# 特許公開公報 AI検索アシスタント
+# 特許データベース検索システム
 
-特許公開公報のPDFファイルをアップロードして、AIによる詳細な分析と関連情報検索を行うWebアプリケーションです。
+特許データベースから検索し、AIによる詳細な分析と関連情報検索を行うWebアプリケーションです。
 
 ## 🎯 概要
 
-このアプリケーションは、LangChain、LangGraph、OpenAI、ChromaDBを活用して構築されたRAG（Retrieval-Augmented Generation）システムです。特許文書の内容を理解し、質問に対して詳細な回答を生成するとともに、関連する特許情報をWeb検索で補完します。
+このアプリケーションは、pandas、scikit-learn、OpenAIを活用して構築された特許検索・分析システムです。CSV形式の特許データベースから類似度検索で関連特許を発見し、AIによる詳細な技術分析を提供します。
+
+### 🔄 システム概要（2025年7月更新）
+- **PDFアップロード型** → **特許データベース検索型** に全面改良
+- **TF-IDF + コサイン類似度**による高速検索
+- **段階的UI**: 検索→候補表示→選択→詳細→質問→AI回答
 
 ## ✨ 主要機能
 
-### 📄 PDFアップロード
-- ドラッグ&ドロップ対応のファイルアップロード
-- PDFファイル形式の自動検証
-- 16MBまでのファイルサイズ制限
-- セキュアなファイル名処理
+### 🔍 特許検索システム
+- **TF-IDF + コサイン類似度**による高精度な意味的検索
+- **CSV特許データベース**から瞬時に関連特許を発見
+- **名称・要約・所管部課名**の包括的検索
+- **上位3件の候補表示**で効率的な特許発見
 
-### 🧠 RAGシステム
-- 特許文書の自動分割とベクトル化
-- OpenAI Embeddingsによる高精度な類似度検索
-- ChromaDBによる効率的なベクトルストレージ
-- 特許文書に特化したプロンプトエンジニアリング
+### 📋 段階的インタラクション
+- **検索**: キーワード入力による自由記述検索
+- **候補表示**: 出願番号・名称・筆頭出願人・発明者を表示
+- **選択**: クリック選択による直感的操作
+- **詳細表示**: 完全な特許情報（登録情報・発明者・要約等）
+- **質問**: 選択特許への自由記述質問
+- **AI回答**: GPT-4o-mini による詳細技術分析
 
-### 🔍 Web検索機能
-- SerpAPIを使用した特許関連情報の検索
-- 日本語・日本地域に最適化された検索
-- 最大5件の関連特許情報表示
+### 🤖 AI分析機能
+- **特許特化プロンプト**による専門的な技術分析
+- **CSVデータベース活用**による詳細情報提供
+- **技術的特徴・応用分野・競合分析**等の包括的回答
+- **事業関連性**の洞察提供
 
-### ⚡ LangGraphワークフロー
-- ツール使用可否の自動判定
-- メモリ機能付き会話履歴
-- ストリーミング応答による快適なUX
+### 💻 モダンUI/UX
+- **レスポンシブデザイン**: PC・タブレット・スマートフォン対応
+- **カードベースUI**: 直感的な特許選択
+- **ローディング表示**: 処理状況の可視化
+- **エラーハンドリング**: 堅牢なユーザー体験
 
 ## 🚀 セットアップと起動方法
 
@@ -42,11 +51,11 @@
 
 #### 1. 仮想環境のアクティベート
 ```bash
-# new_appディレクトリで実行（親ディレクトリの仮想環境を使用）
+# patent_langchainディレクトリで実行（親ディレクトリの仮想環境を使用）
 source ../langchain/bin/activate
 
 # Windows の場合
-# ..\langchain\Scripts\activate
+# ..\\langchain\\Scripts\\activate
 ```
 
 #### 2. 依存関係のインストール・確認
@@ -55,7 +64,7 @@ source ../langchain/bin/activate
 pip install -r requirements.txt
 
 # または、インストール済みライブラリの確認
-pip list | grep -E "(flask|langchain|openai|chromadb|serpapi)"
+pip list | grep -E "(flask|pandas|scikit-learn|openai|serpapi)"
 ```
 
 #### 3. 設定ファイルの準備
@@ -68,17 +77,28 @@ cp .env.example .env
 # SERP_API_KEY=your-serp-api-key
 ```
 
-#### 4. アプリケーションの起動
+#### 4. 特許データファイルの配置
 ```bash
-# new_app ディレクトリに移動
-cd new_app
+# 特許データファイルをプロジェクトルートに配置
+# ファイル名: right_list_modified.csv
+# ※このファイルはGit管理外のため、別途取得が必要
+# patent_data_template.csvでヘッダー構造を確認可能
+```
 
-# Flaskアプリケーションを起動
+#### 5. 新規依存関係のインストール
+```bash
+# 新しく追加されたライブラリをインストール
+pip install pandas==2.2.2 scikit-learn==1.5.1
+```
+
+#### 6. アプリケーションの起動
+```bash
+# patent_langchain ディレクトリで実行
 python app.py
 ```
 
-#### 5. アクセス
-ブラウザで `http://localhost:5000` にアクセス
+#### 7. アクセス
+ブラウザで `http://localhost:5001` にアクセス（ポート5001に変更）
 
 ### 🖥️ XserverVPSでのデプロイ
 
@@ -133,86 +153,62 @@ FLASK_PORT=5000
 FLASK_DEBUG=False
 ```
 
-#### 4. アプリケーションの起動
+#### 4. 特許データファイルの配置
+```bash
+# 特許データファイル（right_list_modified.csv）をアップロード
+# SCPやFTPを使用してサーバーにファイルを配置
+scp right_list_modified.csv your-username@your-vps-ip:/path/to/patent_langchain/
+```
+
+#### 5. アプリケーションの起動
 ```bash
 # 設定完了後、再度デプロイスクリプトを実行
 bash deploy.sh
 ```
 
-#### 5. アクセス確認
+#### 6. アクセス確認
 - ブラウザで `http://your-vps-ip:5000` にアクセス
 - ファイアウォールでポート5000が開いていることを確認
 
-#### 6. 本番環境でのサービス管理（オプション）
-
-Systemdを使用してサービスとして管理する場合：
-
-```bash
-# サービスファイルの作成
-sudo nano /etc/systemd/system/patent-app.service
-```
-
-サービスファイル内容：
-```ini
-[Unit]
-Description=Patent Search Application
-After=network.target
-
-[Service]
-Type=simple
-User=your-username
-WorkingDirectory=/home/your-username/patent_langchain
-Environment=PATH=/home/your-username/patent_langchain/venv/bin
-ExecStart=/home/your-username/patent_langchain/venv/bin/python app.py
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-サービスの有効化と開始：
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable patent-app
-sudo systemctl start patent-app
-sudo systemctl status patent-app
-```
-
-#### XserverVPS固有の注意事項
-- ポート5000がファイアウォールで許可されていることを確認
-- メモリ使用量を定期的に監視（ChromaDBがメモリを使用）
-- ログファイルのローテーション設定を推奨
-- SSL証明書の設定（Let's Encrypt等）を検討
-
 ## 📱 使用方法
 
-### ステップ 1: 特許文書のアップロード
-1. ホーム画面のアップロードエリアをクリック、またはPDFファイルをドラッグ&ドロップ
-2. 特許公開公報のPDFファイルを選択
-3. 「アップロード開始」ボタンをクリック
-4. 処理完了メッセージが表示されるまで待機
+### ステップ 1: 特許検索
+1. 「特許検索」セクションにキーワードを入力
+2. 例: 「ロボット」「燃料電池」「ガス検知」「人工知能」
+3. 「特許を検索」ボタンをクリック
+4. 上位3件の候補が類似度順で表示される
 
-### ステップ 2: 質問の入力
-1. 「特許内容について質問する」セクションに質問を入力
-2. 例: 「この特許の技術的特徴は何ですか？」「類似の先行技術はありますか？」
+### ステップ 2: 特許選択
+1. 検索結果の3件から目当ての特許をクリック選択
+2. 出願番号・名称・筆頭出願人・発明者を確認
+3. 「この特許を選択」ボタンをクリック
+4. 目当ての特許がない場合は「別のキーワードで再検索」
+
+### ステップ 3: 特許詳細確認
+1. 選択した特許の完全な情報を確認
+   - 出願番号・出願日・登録番号・登録日
+   - 所管部課名・筆頭出願人・発明者リスト
+   - 詳細な要約
+2. 「この特許について質問する」ボタンをクリック
+
+### ステップ 4: AI質問・分析
+1. 選択した特許に関する質問を入力
+2. 例: 「この特許の技術的特徴は何ですか？」「応用分野は？」「競合技術との違いは？」
 3. 「質問する」ボタンをクリック
+4. GPT-4o-mini による詳細な技術分析を確認
 
-### ステップ 3: 結果の確認
-- **AI分析結果**: 特許文書の内容に基づいた詳細な回答
-- **関連する特許情報**: Web検索による関連特許情報のリンク
-
-### その他の機能
-- **システムリセット**: アップロードした文書と分析データをクリア
+### ステップ 5: 継続利用
+- **続けて質問する**: 同じ特許への追加質問
+- **新しい特許を検索**: 別の特許検索を開始
 
 ## 🏗️ 技術スタック
 
 ### バックエンド
 - **Flask**: Webアプリケーションフレームワーク
-- **LangChain**: LLMアプリケーション開発フレームワーク
-- **LangGraph**: 複雑なワークフロー管理
-- **OpenAI**: GPT-4o-mini & Embeddings API
-- **ChromaDB**: ベクトルデータベース
-- **SerpAPI**: Web検索API
+- **pandas**: CSVデータ処理・DataFrameライブラリ
+- **scikit-learn**: 機械学習（TF-IDF、コサイン類似度）
+- **OpenAI**: GPT-4o-mini API
+- **SerpAPI**: Web検索API（将来の拡張用）
 
 ### フロントエンド
 - **HTML5**: セマンティックマークアップ
@@ -220,25 +216,32 @@ sudo systemctl status patent-app
 - **JavaScript (ES6+)**: 非同期通信とDOM操作
 
 ### データ処理
-- **PyPDF**: PDFファイル解析
-- **RecursiveCharacterTextSplitter**: テキスト分割
-- **OpenAI Embeddings**: ベクトル化
+- **CSV**: 構造化特許データ
+- **TF-IDF Vectorization**: 文書ベクトル化
+- **Cosine Similarity**: 文書類似度計算
+- **Data Normalization**: 改行文字正規化、欠損値処理
 
 ## 📂 ファイル構成
 
 ```
-new_app/
-├── app.py                  # メインアプリケーション
-├── config.py              # 設定ファイル（Git管理外）
-├── config.py.example      # 設定テンプレート
-├── requirements.txt       # Python依存関係
-├── .gitignore             # Git除外設定
+patent_langchain/
+├── app.py                     # メインアプリケーション
+├── config.py                  # 設定ファイル（Git管理外）
+├── config.py.example          # 設定テンプレート
+├── requirements.txt           # Python依存関係
+├── patent_data_template.csv   # 特許データテンプレート（ヘッダーのみ）
+├── right_list_modified.csv   # 特許データ（Git管理外）
+├── .env                       # 環境変数（Git管理外）
+├── .env.example               # 環境変数テンプレート
+├── .gitignore                # Git除外設定
 ├── templates/
-│   └── index.html         # フロントエンドUI
-├── uploads/               # PDFアップロード用（Git管理外）
-├── chroma_db/            # ChromaDBデータ（Git管理外）
-├── README.md             # このファイル
-└── CLAUDE.md             # 開発履歴・技術詳細
+│   └── index.html             # 改良されたフロントエンドUI
+├── uploads/                   # ファイル用（Git管理外）
+├── chroma_db/                # データベース用（Git管理外）
+├── README.md                 # このファイル
+├── CLAUDE.md                 # 開発履歴・技術詳細
+├── deploy.sh                 # デプロイスクリプト
+└── run.sh                    # 起動スクリプト
 ```
 
 ## ⚠️ 注意事項
@@ -246,11 +249,12 @@ new_app/
 ### セキュリティ
 - APIキーは絶対にGitリポジトリにコミットしないでください
 - `config.py` は `.gitignore` に含まれています
-- アップロードファイルは一時的にサーバーに保存されます
+- 特許データファイルは機密性を考慮してGit管理外にしています
 
-### ファイルサイズ制限
-- アップロード可能なPDFファイルは最大16MBです
-- 大きなファイルの場合、処理に時間がかかる場合があります
+### データファイル要件
+- `right_list_modified.csv` が必須です
+- ファイルが存在しない場合、アプリケーションは起動時にエラーになります
+- `patent_data_template.csv` でヘッダー構造を確認できます
 
 ### APIコスト
 - OpenAI APIとSerpAPIの使用により料金が発生します
@@ -262,24 +266,26 @@ new_app/
 1. 仮想環境がアクティベートされているか確認
 2. 必要なライブラリがインストールされているか確認
 3. `config.py` が正しく設定されているか確認
-
-### アップロードエラーが発生する場合
-1. ファイルがPDF形式であることを確認
-2. ファイルサイズが16MB以下であることを確認
-3. `uploads/` フォルダの書き込み権限を確認
+4. `right_list_modified.csv` ファイルが存在するか確認
 
 ### 検索結果が表示されない場合
-1. SerpAPI APIキーが正しく設定されているか確認
-2. インターネット接続を確認
-3. APIキーの使用制限に達していないか確認
+1. 特許データファイルが正しく配置されているか確認
+2. 検索キーワードを変更してみる
+3. ファイルの文字エンコーディングを確認
+
+### 依存関係エラーが発生する場合
+1. `pip install pandas==2.2.2 scikit-learn==1.5.1` を実行
+2. 仮想環境が正しくアクティベートされているか確認
 
 ## 🔄 バージョン情報
 
-- **Version**: 1.0.0
-- **Last Updated**: 2025-01-20
+- **Version**: 2.0.0（特許データベース検索システム）
+- **Last Updated**: 2025-07-25
 - **Python**: 3.8+
-- **LangChain**: 0.3.x
 - **Flask**: 3.0.x
+- **pandas**: 2.2.2
+- **scikit-learn**: 1.5.1
+- **OpenAI**: 1.47.0
 
 ## 📝 ライセンス
 

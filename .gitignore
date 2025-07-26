@@ -11,6 +11,9 @@ chroma_db/
 uploads/
 *.pdf
 
+# === Data Files ===
+right_list_modified.csv
+
 # === Python Cache ===
 __pycache__/
 *.py[cod]

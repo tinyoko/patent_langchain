@@ -1,472 +1,639 @@
 <!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>特許公開公報 - AI検索アシスタント</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特許データベース検索システム</title>
     <style>
-      body {
-        font-family: "Roboto", "Noto Sans JP", Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: #333;
-        min-height: 100vh;
-      }
+        body {
+            font-family: "Roboto", "Noto Sans JP", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
 
-      .container {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 20px;
-      }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-      .header {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-        text-align: center;
-      }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
 
-      h1 {
-        font-size: 2.5rem;
-        color: #4a5568;
-        margin-bottom: 10px;
-        font-weight: 700;
-      }
+        .header h1 {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
 
-      .subtitle {
-        font-size: 1.1rem;
-        color: #718096;
-        margin-bottom: 0;
-      }
+        .subtitle {
+            font-size: 1.1rem;
+            color: #718096;
+            margin-bottom: 0;
+        }
 
-      .upload-section {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-      }
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
 
-      .upload-area {
-        border: 3px dashed #cbd5e0;
-        border-radius: 10px;
-        padding: 40px;
-        text-align: center;
-        transition: all 0.3s ease;
-        cursor: pointer;
-      }
+        .section h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
 
-      .upload-area:hover {
-        border-color: #667eea;
-        background: #f7fafc;
-      }
+        .search-input {
+            width: calc(100% - 24px);
+            padding: 15px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            margin-bottom: 15px;
+        }
 
-      .upload-area.dragover {
-        border-color: #667eea;
-        background: #ebf8ff;
-      }
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
 
-      .upload-icon {
-        font-size: 3rem;
-        color: #a0aec0;
-        margin-bottom: 20px;
-      }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-      .upload-text {
-        font-size: 1.2rem;
-        color: #4a5568;
-        margin-bottom: 10px;
-      }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
 
-      .upload-subtext {
-        font-size: 0.9rem;
-        color: #718096;
-      }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
 
-      input[type="file"] {
-        display: none;
-      }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
 
-      .btn {
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-weight: 600;
-        margin: 10px 5px;
-      }
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
 
-      .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-      }
+        .patent-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
 
-      .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      }
+        .patent-card:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
 
-      .btn-secondary {
-        background: #e2e8f0;
-        color: #4a5568;
-      }
+        .patent-card.selected {
+            border-color: #667eea;
+            background: #ebf8ff;
+        }
 
-      .btn-secondary:hover {
-        background: #cbd5e0;
-      }
+        .patent-card h3 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+        }
 
-      .question-section {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-      }
+        .patent-info {
+            font-size: 0.9rem;
+            color: #718096;
+        }
 
-      .question-section h2 {
-        color: #4a5568;
-        margin-bottom: 20px;
-        font-size: 1.5rem;
-      }
+        .similarity-score {
+            font-size: 0.8rem;
+            color: #667eea;
+            font-weight: bold;
+        }
 
-      input[type="text"] {
-        width: calc(100% - 24px);
-        padding: 15px 12px;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 1rem;
-        transition: border-color 0.3s ease;
-        margin-bottom: 15px;
-      }
+        .patent-details {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
 
-      input[type="text"]:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-      }
+        .detail-item {
+            margin-bottom: 15px;
+        }
 
-      .response-section {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-      }
+        .detail-label {
+            font-weight: bold;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
 
-      .response-section h2 {
-        margin-top: 0;
-        font-size: 1.5rem;
-        color: #4a5568;
-        border-bottom: 3px solid #667eea;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-      }
+        .detail-value {
+            color: #2d3748;
+            line-height: 1.6;
+        }
 
-      .answer-content {
-        line-height: 1.8;
-        color: #2d3748;
-        white-space: pre-wrap;
-      }
+        .question-input {
+            width: calc(100% - 24px);
+            padding: 15px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            min-height: 60px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
 
-      .links-list {
-        padding-left: 0;
-        list-style: none;
-      }
+        .question-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
 
-      .links-list li {
-        margin-bottom: 15px;
-        padding: 15px;
-        background: #f7fafc;
-        border-radius: 8px;
-        border-left: 4px solid #667eea;
-      }
+        .answer-content {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+            color: #2d3748;
+            white-space: pre-wrap;
+        }
 
-      .links-list a {
-        color: #667eea;
-        text-decoration: none;
-        font-weight: 500;
-        display: block;
-        transition: color 0.2s ease;
-      }
+        .loading {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
 
-      .links-list a:hover {
-        color: #5a67d8;
-      }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-      .status-message {
-        padding: 15px;
-        border-radius: 8px;
-        margin: 15px 0;
-        font-weight: 500;
-      }
+        .hidden {
+            display: none;
+        }
 
-      .status-success {
-        background: #f0fff4;
-        color: #38a169;
-        border: 1px solid #9ae6b4;
-      }
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
 
-      .status-error {
-        background: #fed7d7;
-        color: #e53e3e;
-        border: 1px solid #feb2b2;
-      }
-
-      .loading {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #667eea;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-right: 10px;
-      }
-
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-
-      .hidden {
-        display: none;
-      }
-
-      .buttons-container {
-        text-align: center;
-        margin-top: 20px;
-      }
+        .buttons-container {
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="container">
-      <!-- ヘッダー -->
-      <div class="header">
-        <h1>特許公開公報 AI検索アシスタント</h1>
-        <p class="subtitle">特許文書をアップロードして、AIによる詳細な分析と関連情報検索を行います</p>
-      </div>
-
-      <!-- ファイルアップロードセクション -->
-      <div class="upload-section">
-        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-          <div class="upload-icon">📄</div>
-          <div class="upload-text">特許公開公報PDFファイルをアップロード</div>
-          <div class="upload-subtext">クリックまたはドラッグ&ドロップでファイルを選択</div>
-        </div>
-        <input type="file" id="fileInput" accept=".pdf" />
-        
-        <div class="buttons-container">
-          <button class="btn btn-primary" onclick="uploadFile()">
-            <span id="uploadText">アップロード開始</span>
-            <div id="uploadLoading" class="loading hidden"></div>
-          </button>
-          <button class="btn btn-secondary" onclick="resetSystem()">システムリセット</button>
-        </div>
-        
-        <div id="uploadStatus"></div>
-      </div>
-
-      <!-- 質問セクション -->
-      <div class="question-section">
-        <h2>🔍 特許内容について質問する</h2>
-        <form id="questionForm">
-          <input
-            type="text"
-            id="question"
-            name="question"
-            placeholder="例: この特許の技術的特徴は何ですか？類似の先行技術はありますか？"
-            required
-          />
-          <button type="submit" class="btn btn-primary">
-            <span id="askText">質問する</span>
-            <div id="askLoading" class="loading hidden"></div>
-          </button>
-        </form>
-      </div>
-
-      <!-- 回答セクション -->
-      <div id="responseContainer" class="hidden">
-        <div class="response-section">
-          <h2>💡 AI分析結果</h2>
-          <div id="answer" class="answer-content"></div>
+        <!-- ヘッダー -->
+        <div class="header">
+            <h1>特許データベース検索システム</h1>
+            <p class="subtitle">特許データベースから検索し、AIによる詳細な分析を行います</p>
         </div>
 
-        <div class="response-section">
-          <h2>🔗 関連する特許情報</h2>
-          <ul id="links" class="links-list"></ul>
+        <!-- 特許検索セクション -->
+        <div class="section">
+            <h2>🔍 特許検索</h2>
+            
+            <!-- 検索タイプ選択 -->
+            <div style="margin-bottom: 20px;">
+                <label style="margin-right: 20px;">
+                    <input type="radio" name="searchType" value="simple" checked onchange="toggleSearchMode()"> 
+                    簡単検索（キーワード）
+                </label>
+                <label>
+                    <input type="radio" name="searchType" value="advanced" onchange="toggleSearchMode()"> 
+                    自然言語検索（高度）
+                </label>
+            </div>
+            
+            <!-- 簡単検索 -->
+            <div id="simpleSearch">
+                <input type="text" id="searchInput" class="search-input" 
+                       placeholder="例: ロボット、燃料電池、ガス検知、人工知能">
+            </div>
+            
+            <!-- 自然言語検索 -->
+            <div id="advancedSearch" class="hidden">
+                <textarea id="advancedSearchInput" class="question-input" 
+                          placeholder="例: 名称にメタンを含み発明者が女性で2010年代に出願された特許
+京都大学との共同出願で2020年以降に登録されたもの
+太陽光発電パネルの設置や施工に関係する特許で新しいもの３つを選んで
+意匠出願で直近に登録された３つを選んで"></textarea>
+            </div>
+            
+            <div class="buttons-container">
+                <button class="btn btn-primary" onclick="performSearch()">
+                    <span id="searchText">特許を検索</span>
+                    <div id="searchLoading" class="loading hidden"></div>
+                </button>
+            </div>
+            <div id="searchError"></div>
         </div>
-      </div>
+
+        <!-- 検索結果セクション -->
+        <div id="searchResults" class="section hidden">
+            <h2>📋 検索結果（上位3件）</h2>
+            <div id="patentCards"></div>
+            <div class="buttons-container">
+                <button class="btn btn-primary" onclick="selectPatent()" id="selectBtn" disabled>
+                    この特許を選択
+                </button>
+                <button class="btn btn-secondary" onclick="newSearch()">
+                    別のキーワードで再検索
+                </button>
+            </div>
+        </div>
+
+        <!-- 特許詳細セクション -->
+        <div id="patentDetails" class="section hidden">
+            <h2>📄 特許詳細情報</h2>
+            <div id="detailsContent"></div>
+            <div class="buttons-container">
+                <button class="btn btn-primary" onclick="showQuestionSection()">
+                    この特許について質問する
+                </button>
+            </div>
+        </div>
+
+        <!-- 質問セクション -->
+        <div id="questionSection" class="section hidden">
+            <h2>❓ 特許への質問</h2>
+            <textarea id="questionInput" class="question-input" 
+                      placeholder="例: この特許の技術的特徴は何ですか？応用分野は？競合技術との違いは？"></textarea>
+            <div class="buttons-container">
+                <button class="btn btn-primary" onclick="askQuestion()">
+                    <span id="askText">質問する</span>
+                    <div id="askLoading" class="loading hidden"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- AI回答セクション -->
+        <div id="answerResponse" class="section hidden">
+            <h2>🤖 AI分析結果</h2>
+            <div id="answerContent" class="answer-content"></div>
+            <div class="buttons-container">
+                <button class="btn btn-secondary" onclick="askAnotherQuestion()">
+                    続けて質問する
+                </button>
+                <button class="btn btn-secondary" onclick="startOver()">
+                    新しい特許を検索
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
-      // ドラッグ&ドロップ機能
-      const uploadArea = document.querySelector('.upload-area');
-      const fileInput = document.getElementById('fileInput');
-
-      uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-      });
-
-      uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-      });
-
-      uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-          fileInput.files = files;
-        }
-      });
-
-      // ファイルアップロード機能
-      function uploadFile() {
-        const fileInput = document.getElementById('fileInput');
-        const file = fileInput.files[0];
+        let searchResultsData = [];
+        let selectedPatentIndex = -1;
         
-        if (!file) {
-          showStatus('ファイルを選択してください', 'error');
-          return;
-        }
-
-        if (!file.name.toLowerCase().endsWith('.pdf')) {
-          showStatus('PDFファイルのみアップロード可能です', 'error');
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // ローディング表示
-        document.getElementById('uploadText').textContent = 'アップロード中...';
-        document.getElementById('uploadLoading').classList.remove('hidden');
-
-        fetch('/upload', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            showStatus('特許文書のアップロードと処理が完了しました！', 'success');
-          } else {
-            showStatus(`エラー: ${data.error}`, 'error');
-          }
-        })
-        .catch(error => {
-          showStatus(`エラー: ${error.message}`, 'error');
-        })
-        .finally(() => {
-          document.getElementById('uploadText').textContent = 'アップロード開始';
-          document.getElementById('uploadLoading').classList.add('hidden');
-        });
-      }
-
-      // 質問送信機能
-      document.getElementById('questionForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        const question = document.getElementById('question').value;
-
-        // ローディング表示
-        document.getElementById('askText').textContent = '分析中...';
-        document.getElementById('askLoading').classList.remove('hidden');
-
-        fetch('/ask', {
-          method: 'POST',
-          body: new URLSearchParams({ question: question }),
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            showStatus(`エラー: ${data.error}`, 'error');
-            return;
-          }
-
-          // 回答表示
-          document.getElementById('answer').textContent = data.answer || '回答を生成できませんでした。';
-
-          // リンク表示
-          const linksUl = document.getElementById('links');
-          linksUl.innerHTML = '';
-
-          const linksArray = typeof data.links === 'string' 
-            ? data.links.split('\n') 
-            : data.links;
-
-          if (linksArray && linksArray.length > 0) {
-            linksArray.forEach(linkText => {
-              if (!linkText.trim()) return;
-
-              const li = document.createElement('li');
-              const a = document.createElement('a');
-
-              const urlMatch = linkText.match(/https?:\/\/[^\s]+/);
-              const url = urlMatch ? urlMatch[0] : '#';
-
-              a.href = url;
-              a.textContent = linkText;
-              a.target = '_blank';
-              li.appendChild(a);
-              linksUl.appendChild(li);
-            });
-          } else {
-            linksUl.innerHTML = '<li>関連する特許情報が見つかりませんでした。</li>';
-          }
-
-          // 回答セクションを表示
-          document.getElementById('responseContainer').classList.remove('hidden');
-        })
-        .catch(error => {
-          showStatus(`エラー: ${error.message}`, 'error');
-        })
-        .finally(() => {
-          document.getElementById('askText').textContent = '質問する';
-          document.getElementById('askLoading').classList.add('hidden');
-        });
-      });
-
-      // システムリセット機能
-      function resetSystem() {
-        if (confirm('アップロードした特許文書と分析データをすべてリセットしますか？')) {
-          fetch('/reset', {
-            method: 'POST'
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              showStatus('システムがリセットされました', 'success');
-              document.getElementById('responseContainer').classList.add('hidden');
-              document.getElementById('question').value = '';
-              document.getElementById('fileInput').value = '';
+        // 検索モード切り替え
+        function toggleSearchMode() {
+            const searchType = document.querySelector('input[name="searchType"]:checked').value;
+            const simpleSearch = document.getElementById('simpleSearch');
+            const advancedSearch = document.getElementById('advancedSearch');
+            
+            if (searchType === 'simple') {
+                simpleSearch.classList.remove('hidden');
+                advancedSearch.classList.add('hidden');
+            } else {
+                simpleSearch.classList.add('hidden');
+                advancedSearch.classList.remove('hidden');
             }
-          })
-          .catch(error => {
-            showStatus(`エラー: ${error.message}`, 'error');
-          });
         }
-      }
-
-      // ステータスメッセージ表示
-      function showStatus(message, type) {
-        const statusDiv = document.getElementById('uploadStatus');
-        statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
         
-        // 3秒後に自動的に消去
-        setTimeout(() => {
-          statusDiv.innerHTML = '';
-        }, 3000);
-      }
+        // 統合検索実行
+        function performSearch() {
+            const searchType = document.querySelector('input[name="searchType"]:checked').value;
+            
+            if (searchType === 'simple') {
+                searchPatents();
+            } else {
+                searchPatientsAdvanced();
+            }
+        }
+
+        // 簡単検索
+        function searchPatents() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                showError('searchError', '検索キーワードを入力してください');
+                return;
+            }
+
+            executeSearch('/search_patents', query);
+        }
+        
+        // 自然言語検索
+        function searchPatientsAdvanced() {
+            const query = document.getElementById('advancedSearchInput').value.trim();
+            
+            if (!query) {
+                showError('searchError', '検索クエリを入力してください');
+                return;
+            }
+
+            executeSearch('/search_patents_advanced', query);
+        }
+        
+        // 検索実行共通関数
+        function executeSearch(endpoint, query) {
+            // ローディング表示
+            document.getElementById('searchText').textContent = '検索中...';
+            document.getElementById('searchLoading').classList.remove('hidden');
+            clearError('searchError');
+
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError('searchError', data.error);
+                    return;
+                }
+
+                searchResultsData = data.results;
+                displaySearchResults(data.results, data.search_type);
+                document.getElementById('searchResults').classList.remove('hidden');
+            })
+            .catch(error => {
+                showError('searchError', `検索エラー: ${error.message}`);
+            })
+            .finally(() => {
+                document.getElementById('searchText').textContent = '特許を検索';
+                document.getElementById('searchLoading').classList.add('hidden');
+            });
+        }
+
+        // 検索結果表示
+        function displaySearchResults(results, searchType) {
+            const container = document.getElementById('patentCards');
+            container.innerHTML = '';
+
+            results.forEach((patent, index) => {
+                const card = document.createElement('div');
+                card.className = 'patent-card';
+                card.onclick = () => selectCard(index);
+                
+                // 基本情報
+                let cardContent = `
+                    <h3>${patent.name}</h3>
+                    <div class="patent-info">
+                        <strong>出願番号:</strong> ${patent.application_number}<br>
+                        <strong>筆頭出願人:</strong> ${patent.applicant}<br>
+                        <strong>発明者:</strong> ${patent.inventor}
+                `;
+                
+                // 高度検索の場合は追加情報を表示
+                if (searchType === 'advanced_natural_language') {
+                    cardContent += `<br>
+                        <strong>出願日:</strong> ${patent.application_date || 'N/A'}<br>
+                        <strong>登録日:</strong> ${patent.registration_date || 'N/A'}<br>
+                        <strong>法別:</strong> ${patent.law_type || 'N/A'}<br>
+                        <strong>所管部課:</strong> ${patent.department || 'N/A'}
+                    `;
+                    
+                    if (patent.summary_preview) {
+                        cardContent += `<br><strong>要約:</strong> ${patent.summary_preview}`;
+                    }
+                }
+                
+                cardContent += `
+                    </div>
+                    <div class="similarity-score">類似度: ${(patent.similarity * 100).toFixed(1)}%</div>
+                `;
+                
+                card.innerHTML = cardContent;
+                container.appendChild(card);
+            });
+        }
+
+        // カード選択
+        function selectCard(index) {
+            // 既存の選択を解除
+            document.querySelectorAll('.patent-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // 新しいカードを選択
+            document.querySelectorAll('.patent-card')[index].classList.add('selected');
+            selectedPatentIndex = index;
+            document.getElementById('selectBtn').disabled = false;
+        }
+
+        // 特許選択
+        function selectPatent() {
+            if (selectedPatentIndex === -1) {
+                alert('特許を選択してください');
+                return;
+            }
+
+            const patentIndex = searchResultsData[selectedPatentIndex].index;
+
+            fetch('/select_patent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ index: patentIndex })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(`エラー: ${data.error}`);
+                    return;
+                }
+
+                displayPatentDetails(data);
+                document.getElementById('patentDetails').classList.remove('hidden');
+            })
+            .catch(error => {
+                alert(`エラー: ${error.message}`);
+            });
+        }
+
+        // 特許詳細表示
+        function displayPatentDetails(patent) {
+            const container = document.getElementById('detailsContent');
+            
+            container.innerHTML = `
+                <div class="patent-details">
+                    <div class="detail-item">
+                        <div class="detail-label">出願番号</div>
+                        <div class="detail-value">${patent.application_number}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">出願日</div>
+                        <div class="detail-value">${patent.application_date}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">登録番号</div>
+                        <div class="detail-value">${patent.registration_number}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">登録日</div>
+                        <div class="detail-value">${patent.registration_date}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">特許名称</div>
+                        <div class="detail-value">${patent.name}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">所管部課</div>
+                        <div class="detail-value">${patent.department}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">筆頭出願人</div>
+                        <div class="detail-value">${patent.main_applicant}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">発明者</div>
+                        <div class="detail-value">${patent.inventors.join(', ')}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">要約</div>
+                        <div class="detail-value">${patent.summary}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 質問セクション表示
+        function showQuestionSection() {
+            document.getElementById('questionSection').classList.remove('hidden');
+        }
+
+        // 質問送信
+        function askQuestion() {
+            const question = document.getElementById('questionInput').value.trim();
+            
+            if (!question) {
+                alert('質問を入力してください');
+                return;
+            }
+
+            // ローディング表示
+            document.getElementById('askText').textContent = '分析中...';
+            document.getElementById('askLoading').classList.remove('hidden');
+
+            fetch('/ask_about_patent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question: question })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(`エラー: ${data.error}`);
+                    return;
+                }
+
+                document.getElementById('answerContent').textContent = data.answer;
+                document.getElementById('answerResponse').classList.remove('hidden');
+            })
+            .catch(error => {
+                alert(`エラー: ${error.message}`);
+            })
+            .finally(() => {
+                document.getElementById('askText').textContent = '質問する';
+                document.getElementById('askLoading').classList.add('hidden');
+            });
+        }
+
+        // エラー表示
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="error-message">${message}</div>`;
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 5000);
+        }
+        
+        // エラークリア
+        function clearError(elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = '';
+        }
+
+        // 新しい検索
+        function newSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('patentDetails').classList.add('hidden');
+            document.getElementById('questionSection').classList.add('hidden');
+            document.getElementById('answerResponse').classList.add('hidden');
+            selectedPatentIndex = -1;
+        }
+
+        // 続けて質問
+        function askAnotherQuestion() {
+            document.getElementById('questionInput').value = '';
+            document.getElementById('answerResponse').classList.add('hidden');
+        }
+
+        // 最初から
+        function startOver() {
+            newSearch();
+        }
+
+        // Enterキーで検索
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        document.getElementById('advancedSearchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter' && event.ctrlKey) {
+                performSearch();
+            }
+        });
     </script>
-  </body>
+</body>
 </html>
